@@ -97,44 +97,6 @@ rewrite rev_inj_iff; auto.
 apply inject_compact.
 Qed.
 
-(* specialization of Lemma forallex_iff_lelub a.k.a "Lemma 2" in paper 
-Lemma embedding_le{P:PPO} :
-  forall (A : COMPLETION P),
-  forall (cc cc': A),
-    cc <= cc' <->
-      (forall x, member (compacts_le cc) x->
-        exists x', member (compacts_le cc') x' /\ x <= x').                              
-Proof.
-intros A cc cc'.  
-split.
-cbn in *.
-specialize (compacts_le_directed (P:= ideals_ppo P) cc) as Hd.
-
--
-  intro Heq.
-  replace cc with
-    (cpo_lub (compacts_le cc)) in Heq;  [ |
-  now rewrite algebraic_lub].
-   replace cc' with
-    (cpo_lub (compacts_le cc')) in Heq;  [ |
-  now rewrite algebraic_lub].                                                
-  rewrite <-  forallex_iff_lelub in Heq; auto.
-   +admit.
-   +  admit.
-
-   + now intros x (Hc & _).
--
-  intros  Hall.
-  replace cc with
-    (cpo_lub (compacts_le cc));  [ |
-   now rewrite algebraic_lub].
-   replace cc' with
-    (cpo_lub (compacts_le cc'));  [ |
-   now rewrite algebraic_lub].
-  rewrite <-  forallex_iff_lelub; auto.
-  now intros x (Hc & _).
-Qed.*)
-
 
 Definition ideal_completion (P : PPO) : COMPLETION P.
 unshelve econstructor.

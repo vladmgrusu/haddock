@@ -56,30 +56,6 @@ apply revb_is_monotonic.
 now apply  mapb_monotonic_in_func.
 Qed.
 
-Lemma mapb_continuous_in_func{P1 P2: CPO} : 
-forall (l : List P1),
-is_continuous (P1 := EXP_CPO P1 P2) (P2 := List_CPO P2)
- (fun g => mapb g l).
-Proof.
-intros [l|];
-[| cbn ; apply 
-   (@cst_is_continous(EXP_CPO P1 P2)  (List_CPO P2))].
-split.
-{
- apply monotonic_directed; auto.
- intros x y Hle.
- now apply mapb_monotonic_in_func.
-}
- 
-specialize (lub_proj _ H) as Hlp.
-specialize (cpo_lub_prop _ H) as Hlc.
-apply is_lub_unique with (x := cpo_lub S) in Hlp; auto.
-rewrite Hlp.
-clear Hlp.
-cbn [mapb].
-remember (list_inj P2
-(map (fun d : P1 => cpo_lub (proj S d)) l)) as x.
-Admitted.
 
 
 Lemma Mirror_is_H_continuous : is_H_continuous Mirror.
