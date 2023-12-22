@@ -4,11 +4,42 @@ From Corec Require Export Tree Haddock Lists.
 Import Nat Lt Le ListNotations.
 
 
+
 Definition Mirror(f : RoseTree -> RoseTree): 
  RoseTree -> RoseTree
  := rtree ° (revb ° ((mapb f) ° rforest)).
 
-Lemma Mirror_mono :
+
+
+ Lemma mapb_monotonic_in_func{P1 P2: CPO} : forall (f g:P1->P2),
+ (forall x, f x <= g x) ->
+ forall l, 
+ List_le (mapb f l) (mapb g l).
+ Proof.
+ intros f g Ha l.
+ destruct l ; [ | apply List_le_refl].
+ destruct l ; [apply List_le_refl|].
+ cbn.
+ constructor.
+ -
+   cbn.
+   now do 2 rewrite map_length.
+ -
+   cbn.
+   rewrite map_length.
+   intros i Hlt.
+   destruct i; [apply Ha |].
+   rewrite nth_indep with (d' := f ppo_bot);
+     [|  rewrite map_length;lia].
+  rewrite map_nth. 
+  rewrite nth_indep with (d' := g ppo_bot);
+  [| rewrite map_length; lia].
+  rewrite map_nth.  
+  apply Ha.
+ Qed.
+ 
+
+Lemma Mirror_is_monotonic :
 is_monotonic 
   (P1 := EXP_Poset RoseTree RoseTree)
   (P2 := EXP_Poset RoseTree RoseTree)
@@ -25,226 +56,92 @@ apply revb_is_monotonic.
 now apply  mapb_monotonic_in_func.
 Qed.
 
-(**
-Lemma F_cont : forall (g : conat -> A -> B),
-(forall a,
-is_continuous (P1 := conat_CPO) (P2 := B)
-(fun n => (g n) a))
-->
-(forall a, 
- is_continuous (P1 := conat_CPO) (P2 := B)
-(fun n => F  (g n ) a)).
+Lemma mapb_continuous_in_func{P1 P2: CPO} : 
+forall (l : List P1),
+is_continuous (P1 := EXP_CPO P1 P2) (P2 := List_CPO P2)
+ (fun g => mapb g l).
 Proof.
-intros g Hac a.
-rewrite continuous_iff_mono_commutes; split.
-{
-  intros x y Hle.
-  apply F_mono.
-  intros a'.
-  specialize (Hac a').
-  rewrite continuous_iff_mono_commutes in Hac.
-  destruct Hac as (Hm & _).
-  now apply Hm.
-}
-intros C k Hd Hl.
+intros [l|];
+[| cbn ; apply 
+   (@cst_is_continous(EXP_CPO P1 P2)  (List_CPO P2))].
 split.
 {
-  intros x Hmx.
-  destruct Hmx as (z & Hmz & Heq); subst.
-  apply F_mono.
-  intro a'.
-  specialize (Hac a').
-  rewrite continuous_iff_mono_commutes in Hac.
-  destruct Hac as (Hm & _).
-  apply Hm.
-  destruct Hl as (Hul &_).
-  now apply Hul.
+ apply monotonic_directed; auto.
+ intros x y Hle.
+ now apply mapb_monotonic_in_func.
 }
-intros t Hut.
-assert (Hut' : forall c, member C c -> F (g c) a <=  t).
-{
-  intros c Hm.
-  apply Hut.
-  now exists c.
-}
-clear Hut.
-unfold F, "°" in *.
-cbn in *.
-specialize Hd as Hd'.
-destruct Hd' as (Hne & _).
-rewrite not_empty_member in  Hne.
-destruct Hne as (n & Hmn).
-specialize (Hut' _ Hmn) as Humn.
-destruct (rose_tree_cases_alt t) as [Heq | (L & Heq)]; subst.
-{
-  rewrite le_bot_iff_eq in *.
-  apply rtree_is_bot,revb_is_bot,mapb_is_bot in Humn.
-  rewrite Humn.
-  cbn.
-  rewrite rtree_extends_treeb; [| apply @bot_is_compact].
-  cbn [treeb].
-  replace (@rev_inj Forest_PPO RoseForest (list_bot A)) with 
-  (@ppo_bot Forest_PPO); auto ;
-   [apply @inject_bot |].
-  symmetry.
-  rewrite rev_inj_iff; [|apply @bot_is_compact].
-  apply  @inject_bot.
-}
- clear Humn.
- apply rtree_is_monotonic.
- assert (Hut : forall c : conat,
- member C c ->
-   List_le (revb
-      (mapb (g c)
-         (rforest a)))
-   (list_inj RoseTree
-      L)) by 
-  (intros c Hmc;
-  specialize (Hut' _ Hmc);
-  now apply rtree_is_rev_monotonic in Hut').
- clear Hut'.
- remember (rforest a) as F.
- destruct F; cbn; [| apply List_le_bot].
- replace L with (rev (rev L)) in * by now rewrite rev_involutive.
- assert (Hle :
- List_le (list_inj A  (map (g k) l)) (list_inj RoseTree (rev L))).
- {
-  apply preservers_cont_aux with (C := C); auto.
-  intros c Hmc.
-  specialize (Hut _ Hmc).
-  inversion Hut; subst.
-  remember (rev L) as L'.
-  remember (length l) as ll.
-  do 2 rewrite rev_length in H1.
-  constructor; auto.
-  rewrite rev_length, map_length in *.
-  intros i Hlt.
-  unfold A in *.
-  destruct ll;
-  [  rewrite <- Heqll in Hlt ;lia |].
-
-  assert (Hlt' : length l - S i < length l) by lia.
-  specialize (H2 _ Hlt').
-  rewrite rev_nth in H2; [| now rewrite map_length].
-  rewrite rev_nth in H2; [| now rewrite <- H1].
-  rewrite map_length, <- H1 in H2.
-  now replace (length l -
-  S (length l - S i)) with i in H2 by lia.
- }
- {
-  inversion Hle; subst.
-  rewrite map_length, rev_length in H1.
-  constructor.
-  -
-   repeat rewrite rev_length.
-   now rewrite map_length.
-  -
-    rewrite map_length in H2.
-    rewrite rev_length, map_length.
-    intros i Hlt.
-    rewrite rev_nth; [| now rewrite map_length].
-    rewrite rev_nth; [| now rewrite rev_length, <- H1].
-    rewrite map_length, rev_length, <- H1.
-    apply H2; lia.
- }
-Qed. 
-
  
-Lemma F_comp : forall (h : A -> B),
- (forall a, is_compact (h a)) ->
- (forall a, is_compact (F h a)).
+specialize (lub_proj _ H) as Hlp.
+specialize (cpo_lub_prop _ H) as Hlc.
+apply is_lub_unique with (x := cpo_lub S) in Hlp; auto.
+rewrite Hlp.
+clear Hlp.
+cbn [mapb].
+remember (list_inj P2
+(map (fun d : P1 => cpo_lub (proj S d)) l)) as x.
+Admitted.
+
+
+Lemma Mirror_is_H_continuous : is_H_continuous Mirror.
 Proof.
-unfold F, "°", A, B.  
-intros h Ha a.
-rewrite inject_compacts.
-cbn.
-remember (rforest a) as F.
-destruct F.
-{
-  cbn.
-  assert 
-    (Hal: forall i, i < length l -> 
-    is_compact (h ((nth i l ppo_bot)))) by
-    (intros i Hlt; apply Ha).
-  assert 
-    (Hall: forall i, i < length l -> 
-       exists t:Tree, h (nth i l ppo_bot) =
-          @inject Tree_PPO RoseTree t).
-  {
-    intros i Hlt.
-    specialize (Hal _ Hlt).
-    now rewrite inject_compacts in Hal.
-  }
-  clear Hal.
-  assert (Hal :
-  forall (j : BELOW (length l)), exists t, 
-  h (nth (nval  _ j)  l ppo_bot) = inject t).
-  {
-    intros (j & Hlt).
-    cbn.
-    destruct (Hall _ Hlt).
-    now exists x.
-}
-clear Hall.
-apply functional_choice in Hal.
-destruct Hal as (f & Hallf).
-cbn in f.
-remember (EXP2list (length l) f) as l'.
-remember (fun t => 
-   @rev_inj Tree_PPO RoseTree 
-    (h (@inject Tree_PPO RoseTree t))) as h'.
-exists (treeb (list_inj _ (rev (l')))).
-cbn; subst.
-assert (Heq': (list_inj RoseTree (rev (map h l))) =
-rforest (@inject Tree_PPO RoseTree
-(tree
-(rev (EXP2list (length l) f)))));
-   [| now rewrite Heq', rtree_rforest].  
-rewrite rforest_extends_forestb; [| apply inject_compact].
-rewrite rev_inj_inject.
-f_equal.
-cbn.
-f_equal.
-repeat rewrite rev_length,map_length.
-rewrite rev_length, length_EXP2list.
-apply nth_ext with (d := ppo_bot)(d' := ppo_bot).
+split; [apply Mirror_is_monotonic|].
+intros S Hd.
+extensionality t.
+unfold Mirror.
+destruct (rose_tree_cases_alt t) as [Hbot | (l & Heql)]; subst.
 -
- now rewrite  rev_length, map_length, length_EXP2list.
--  
- intros i Hlt.
- rewrite rev_nth; rewrite rev_length, map_length in *; auto.
- rewrite nth_EXP2LIST with (Hi := Hlt).
- unfold list2EXP.
+ unfold "°".
+ rewrite rforest_extends_forestb; [| apply bot_is_compact].
+ replace
+   (@rev_inj Tree_PPO RoseTree(@ppo_bot RoseTree)) with tbot;
+ [| symmetry; rewrite (@rev_inj_iff Tree_PPO RoseTree);
+ [apply @inject_bot | apply bot_is_compact]].
+ rewrite @inject_bot.
  cbn.
- remember (length l) as ll.
- destruct ll; try lia.
- rewrite Heqll in *.
- erewrite nth_indep with (d' := h ppo_bot); [| rewrite map_length; lia].
- rewrite map_nth.
- rewrite rev_nth; [| rewrite length_EXP2list; lia].
- rewrite length_EXP2list.
- assert (Hlt' : S ll - S i < S ll) by lia.
- rewrite nth_EXP2LIST with (Hi := Hlt').
- now specialize (Hallf {|
-  nval := S ll - S i;
-  is_below := Hlt'
-|}) . 
-}
-{
-  exists tbot.
-  rewrite mapb_bot.
-  cbn.
-  now rewrite rtree_bot,<- inject_bot.
-}  
+ rewrite  fmap_const_single; [| now destruct Hd].
+ now rewrite cpo_lub_single.
+-
+remember ((fun f : EXP RoseTree RoseTree
+  =>
+  (rtree
+   ° (revb ° (mapb f ° rforest)))
+    (rtree
+       (list_inj RoseTree l)))) as F.
+  unfold "°" in HeqF.
+  rewrite rforest_rtree in HeqF.
+  assert (HcF : 
+  @is_continuous (EXP_CPO RoseTree RoseTree) RoseTree F).  
+  {
+    assert (Heqf':
+    F = fun f => (rtree ° (revb ° (mapb f))) (list_inj _ l))
+     by now subst; auto.
+    clear HeqF.
+    subst.
+    apply comp_is_continous; [apply rtree_is_continous|].
+    replace ((fun f : EXP RoseTree RoseTree =>
+    (revb ° mapb f)
+      (list_inj RoseTree l))) with 
+     (revb ° 
+     ((fun f : EXP RoseTree RoseTree =>  mapb f
+     (list_inj _ l)))
+     ); auto.
+    apply
+     (@comp_is_continous 
+     (EXP_CPO RoseTree RoseTree) 
+     (RoseForest) 
+     (RoseForest)); [apply revb_is_continuous|].
+    apply  mapb_continuous_in_func.
+  }
+  destruct HcF with (S := S); [exact Hd |].
+  cbn in H0.
+  unfold "°".
+  rewrite <- H0, HeqF.
+  now rewrite rforest_rtree.
 Qed.
-End MirrorFunctional.
 
-Import MirrorFunctional.
-Module Import  MirrorDef := FuncDefMod MirrorFunctional.
 
-Definition Mirror :
-  (RoseTree -> RoseTree)-> RoseTree -> RoseTree := F.
-Definition mirror : RoseTree -> RoseTree := f.
+Definition mirror : RoseTree -> RoseTree := 
+   pointwise_fix Mirror.
 
 
 Lemma mirror_least_fixpoint_of_Mirror : 
@@ -253,7 +150,7 @@ is_least_fixpoint
  Mirror mirror.  
 Proof.
 intros.
-apply f_is_least_fixpoint_of_F.
+apply Haddock_pointwise,Mirror_is_H_continuous.
 Qed.
 
 
@@ -271,7 +168,7 @@ Proof.
 destruct (mirror_least_fixpoint_of_Mirror) as (Hf & _).
 unfold is_fixpoint in Hf.
 rewrite <- Hf.
-unfold Mirror, F, "°".
+unfold Mirror, "°".
 rewrite rforest_bot.
 cbn [mapb revb].
 apply rtree_bot.
@@ -286,7 +183,7 @@ intro l.
 destruct (mirror_least_fixpoint_of_Mirror) as (Hf & _).
 unfold is_fixpoint in Hf.
 rewrite <- Hf.
-unfold Mirror, F, "°".
+unfold Mirror, "°".
 repeat f_equal.
 -
   rewrite <- Hf at 1.
@@ -345,30 +242,25 @@ destruct (rose_tree_cases t) as [Habs | (f & Hnef & Heqf)]; subst; auto.
 Qed.
 
 
-
-
-
-
-
 Lemma mirror_total : forall t, 
-is_well_formed t -> is_well_formed (mirror t).
+total t -> total (mirror t).
 Proof.
 intros t Hw. 
-apply (is_well_formed_coind (fun t =>  
-exists t',is_well_formed t' /\ t = mirror t'));
+apply (total_coind (fun t =>  
+exists t',total t' /\ t = mirror t'));
 [| now exists t].
 intros t' Hm.
 destruct Hm as (t'' & Hmt'' & Heq); subst.
 rename t'' into t', Hmt'' into Hmt'.
 specialize  Hmt' as Hmt''.
-rewrite is_well_formed_unfold in Hmt'.
+rewrite total_unfold in Hmt'.
 destruct Hmt' as (Hne & Ha).
 destruct (rose_tree_cases t') as [Habs | (f & Hnef & Heq)];
  [exfalso ; apply Hne; rewrite Habs; now rewrite <- inject_bot|subst].
 split.
 -
  rewrite <- mirror_fixpoint_eq.
- unfold Mirror, F, "°".
+ unfold Mirror, "°".
  rewrite rforest_rtree in *.
  unfold mapb.
  destruct f; [clear Hnef| exfalso; now apply Hnef].
@@ -383,7 +275,7 @@ split.
 -
  intros t' Hin.
  rewrite <- mirror_fixpoint_eq in Hin.
- unfold Mirror, F, "°" in Hin.
+ unfold Mirror, "°" in Hin.
  repeat rewrite rforest_rtree in *.
 unfold mapb in  Hin.
 destruct f; [clear Hnef| exfalso; now apply Hnef].
@@ -438,7 +330,7 @@ destruct Heqt as [ (Heqt' & Heqt) |
    [|repeat f_equal;  unfold "°"; now repeat rewrite mirror_bot].
 now rewrite map_nth in Hall.
 Qed.
-*)
+
 
   
 

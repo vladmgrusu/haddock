@@ -998,15 +998,8 @@ split.
  Qed.
 
 
+
 (*
-
-Lemma lub_proj{D : Type}{C : CPO}: forall S,
-is_directed S -> 
-is_lub S
-  (fun d : D =>
-   cpo_lub (c:= C) (proj S d)).
-*)
-
 Check listproj.
 
 Lemma lub_proj_list{T : CPO}: forall (S: Setof (List T) )
@@ -1024,86 +1017,7 @@ destruct Hh as [Habs | Hh] ; [contradiction | destruct Hh as (_ & Hh)].
 destruct Hh as (n & S' & HeqS' & HlenS' & HdirS').
 exists n, S'.
 Admitted.
-(*
-Lemma lub_proj_list{T : CPO}: forall (S: Setof (List T) )
-(Hd : is_directed (P := List_Poset T) S),
-S <> single (list_bot T) ->
-exists (n:nat),
-is_lub (P := List_Poset T) S
-(list_inj _ (EXP2list n 
-(fun d => cpo_lub  (proj (fmap S (list2EXP ppo_bot n) d)))
-)).
-Proof.
 *)
 
 
-Lemma mapb_monotonic_in_func{P1 P2: CPO} : forall (f g:P1->P2),
-(forall x, f x <= g x) ->
-forall l, 
-List_le (mapb f l) (mapb g l).
-Proof.
-intros f g Ha l.
-destruct l ; [ | apply List_le_refl].
-destruct l ; [apply List_le_refl|].
-cbn.
-constructor.
--
-  cbn.
-  now do 2 rewrite map_length.
--
-  cbn.
-  rewrite map_length.
-  intros i Hlt.
-  destruct i; [apply Ha |].
-  rewrite nth_indep with (d' := f ppo_bot);
-    [|  rewrite map_length;lia].
- rewrite map_nth. 
- rewrite nth_indep with (d' := g ppo_bot);
- [| rewrite map_length; lia].
- rewrite map_nth.  
- apply Ha.
-Qed.
 
-
-
-(**
-Lemma mapb_continuous_in_func{P1 P2: CPO} : 
-forall (l : List P1),
-is_continuous (P1 := EXP_CPO P1 P2) (P2 := List_CPO P2)
- (fun g => mapb g l).
-Proof.
-intros [l|];
-[| cbn ; apply 
-   (@cst_is_continous(EXP_CPO P1 P2)  (List_CPO P2))].
-split.
-{
- apply monotonic_directed; auto.
- intros x y Hle.
- now apply mapb_monotonic_in_func.
-}
- 
-specialize (lub_proj _ H) as Hlp.
-specialize (cpo_lub_prop _ H) as Hlc.
-apply is_lub_unique with (x := cpo_lub S) in Hlp; auto.
-rewrite Hlp.
-cbn [mapb].
-Unset Printing Implicit.
-
-remember (@fmap (EXP_CPO P1 P2) (List_CPO P2) S
-       (fun g : EXP_CPO P1 P2 => list_inj P2 (@map P1 P2 g l))) as S'.
-apply List_le_antisym.
-  +
-   
-    Check is_lub.
-
-    remember
-      (@cpo_lub (List_CPO P2)
-       (@fmap (EXP_CPO P1 P2) (List_CPO P2) S
-          (fun g : EXP_CPO P1 P2 =>
-           list_inj P2 (@map P1 P2 g l))))
-     as x.
-    destruct x.        
-    {
-      constructor.
-    }
-*)
