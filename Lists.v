@@ -1070,25 +1070,19 @@ end.
 Lemma map_cont_aux{P1 P2 : CPO}:
 forall (l: list P1) (S: Setof (EXP_CPO P1 P2))(T : Setof (List P2)),
 is_directed S -> 
- T =
-    fmap S
+ T = fmap S
          (fun g : EXP_CPO P1 P2 =>
           list_inj P2 (map g l)) ->
 forall 
 (S': Setof (list P2)),
 is_directed (P := list_Poset P2) S' -> 
-remove
-       T (list_bot P2) =
-     fmap S' (list_inj P2) ->
- forall (j : nat),    
-(forall l : list P2, member S' l -> length l = j) ->
-(forall i : nat,
-      i < j -> is_directed (listproj S' i ppo_bot)) ->
-forall (f: EXP P1 P2),  S f -> 
-length l = j ->
+remove T (list_bot P2) = fmap S' (list_inj P2) ->
+forall (j : nat),    
+ length l = j ->
+ forall (f: EXP P1 P2),  S f -> 
 is_lub (P := list_Poset P2)  S' (map (fun d : P1 => cpo_lub (proj S d)) l).
 Proof.
-intros l S T HdS HeqT S' HdS' HeqS' j Ha1 Ha2 f Hmf Hlj.
+intros l S T HdS HeqT S' HdS' HeqS' j  Hlj f  Hmf.
 assert (HeqS'' : S' = fmap T get_list).
 {
   apply set_equal; intro x; split; intro Hmx.
@@ -1192,7 +1186,6 @@ now exists u.
     now rewrite map_nth in Hllu.   
   }
  clear Hllu.
-
  specialize (directed_proj S (nth i l ppo_bot) HdS) as Hdp. 
  specialize (cpo_lub_prop _ Hdp) as Hil.
  destruct Hil as (Hv & Hm).
@@ -1208,10 +1201,10 @@ now exists u.
  specialize (Hu Hmuu).
  destruct Hu  as (Hul & Hull).
  rewrite map_length in *.
-specialize (Hull _ Hlt).
-rewrite nth_indep with (d' := u ppo_bot) in Hull;
- [| now rewrite map_length].
-now rewrite map_nth in Hull.
+ specialize (Hull _ Hlt).
+ rewrite nth_indep with (d' := u ppo_bot) in Hull;
+  [| now rewrite map_length].
+ now rewrite map_nth in Hull.
 Qed.
  
 
@@ -1223,7 +1216,6 @@ Proof.
 intros [l|];
 [| cbn ; apply 
    (@cst_is_continous(EXP_CPO P1 P2)  (List_CPO P2))].
-
 intros S Hd; split.
 {
  apply monotonic_directed; auto.
@@ -1311,6 +1303,7 @@ replace (@fmap (EXP_CPO P1 P2)
               (@map P1 P2 g l))) ; auto.
 rewrite Hlp.
 clear Hlp.
+
 assert (HdS' : is_directed (P := list_Poset P2) S').
 {
  apply (@rev_monotonic_directed (list_Poset P2) (List_Poset P2) S')
@@ -1319,9 +1312,8 @@ assert (HdS' : is_directed (P := list_Poset P2) S').
  now inversion Hle.
 }
 assert (Hlub' : forall l',
-is_lub (P := list_Poset P2) S' l' ->
- cpo_lub (c:= List_CPO P2) (fmap S' (list_inj P2)) = 
-list_inj P2 l').
+  is_lub (P := list_Poset P2) S' l' ->
+   cpo_lub (c:= List_CPO P2) (fmap S' (list_inj P2)) = list_inj P2 l').
 {
  intros l' Hlub'.
  assert (Hlub'' : 
