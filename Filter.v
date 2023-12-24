@@ -224,7 +224,7 @@ Lemma a_inf_fix: a_inf = scons a a_inf.
 Proof.
 specialize (Kleene _ F_a_inf_cont ) as Hk.
 destruct Hk as (Hk & _).
-unfold Haddock.is_fixpoint in Hk.
+unfold is_fixpoint in Hk.
 symmetry.
 apply Hk.
 Qed.

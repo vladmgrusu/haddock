@@ -1,7 +1,7 @@
-From Coq Require Import FunctionalExtensionality ProofIrrelevance.
-From Corec Require Import CPO Exp.
+From Coq Require Import FunctionalExtensionality.
+From Corec Require Export Kleene Exp.
 
-
+(*
 Definition is_fixpoint{X :Type} (f : X -> X) (x:X)
 := f x = x.
 
@@ -162,7 +162,7 @@ split.
   +
    now apply iterate_lub_fixpoint.
 Qed.   
-
+*)
 
 Lemma cont_iff_hcont_aux{A:Type}{B:CPO} :
   forall (S : Setof (EXP A B)) 
