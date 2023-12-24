@@ -704,277 +704,6 @@ list_bot _ => list_bot _
 end.
 
 
-
-Lemma is_directed_in_LIST_aux(T : CPO) :
-  forall (S : Setof (LIST T)),
-    is_directed  (P := LIST_PPO T) S ->
-    S = single (LIST_bot T) \/
-      (S <>  single (LIST_bot T) /\
-         exists (j:nat) Sj,  remove S (LIST_bot T)  =
-                      fmap Sj (sum_inj _ j) /\
-                      is_directed (P:= EXP_PPO (BELOW j) T) Sj).
-Proof.
-intros S.
-now rewrite (is_directed_in_sum_iff 
-  (fun n => EXP_CPO (BELOW n) T)).
-Qed.
-
-
-Lemma is_directed_in_LIST(T : CPO) :
-  forall (S : Setof (LIST T)),
-    is_directed  (P := LIST_PPO T) S ->
-    S = single (LIST_bot T) \/
-      (S <>  single (LIST_bot T) /\
-         exists (j:nat) (Sj: Setof (EXP (BELOW j) T)),  
-            remove S (LIST_bot T)  =
-                      fmap Sj (sum_inj _ j) /\
-                      forall d, 
-                      is_directed (P:= T) (proj Sj d)).
-Proof.
-intros S Hd.
-destruct (is_directed_in_LIST_aux T S Hd) as
- [Hs | (Hns & j & Sj & Heqr & Had)]; [now left|right].
-split; auto.
-exists j, Sj.
-split; auto.
-intro d.
-now apply directed_proj.
-Qed.          
-
-
-Definition listproj{T: Type}(S : Setof (list T))(n : nat)(d:T) :=
- (fun (t:T) => exists l, member S l /\ t = nth n l d).
-  
-
-Lemma fmap_single{T: PPO}(S : Setof (List T)):
- @fmap (List_PPO T)
-          (LIST_PPO T) S
-          (@List2LIST T
-             (@ppo_bot T))=
- single (LIST_bot T)
-<->
-S = single (list_bot T).
-Proof.
-split; intro Heq.
--
-subst.
- apply set_equal; intros ; split; intro Hml.
- +
-  rewrite member_single_iff.
-  assert (Hm' :
-    member (@fmap (List_PPO T)
-    (LIST_PPO T) S
-    (@List2LIST T
-       (@ppo_bot T))) (List2LIST ppo_bot x))
-  by (now apply member_fmap).
-  rewrite Heq in Hm'.
-  rewrite member_single_iff in Hm'.
-  destruct x; auto.
-  discriminate.
- +
-  rewrite member_single_iff in Hml.
-  rewrite set_equal in Heq.
-  specialize (Heq (List2LIST ppo_bot x)).
-  rewrite member_single_iff,Hml in  Heq.
-  assert (Hm' : member
-  (fmap S
-     (List2LIST
-        ppo_bot))
-  (List2LIST ppo_bot
-     (list_bot T))) by (now rewrite Heq).
-  destruct Hm' as (x' & Heq' & Heq''); subst.
-  apply List2LIST_injective in Heq''.
-  now rewrite Heq''.
--
-subst.
-apply set_equal; intros ; split; intro Hml.
-+
- destruct Hml as (y & Hs & Heq); subst.
- rewrite member_single_iff in *.
- unfold single in *;subst.
- reflexivity.
-+
- rewrite member_single_iff in Hml.
- exists (list_bot T); split; auto.
- apply member_single.
- Qed. 
-
-
-Lemma is_directed_in_List{T : CPO} :
-  forall (S : Setof (List T)),
-    is_directed  (P := List_PPO T) S ->
-    S = single (list_bot T) \/
-      (S <>  single (list_bot T) /\
-         exists (j:nat) (S' : Setof (list T)),
-         remove S (list_bot T) = fmap S' (list_inj _) /\
-            (forall l, member S' l ->  length l = j) /\
-                      forall i, i < j -> 
-                      is_directed (P:= T) 
-                      (listproj S' i ppo_bot)).
-Proof.
-intros S Hd.
-remember (fmap S (List2LIST ppo_bot)) as SL.
-assert (Hm : is_monotonic (P1:= List_PPO T)
-(P2:= LIST_PPO T) (List2LIST ppo_bot))
-by (intros x y Hle;
-now  apply List2LIST_monotonic).
-specialize (monotonic_directed 
-  (P1:= List_PPO T)
-  (P2:= LIST_PPO T)
-  S (List2LIST ppo_bot) Hm Hd) as HdSL.
-subst.
-remember (@fmap (List_PPO T)
-(LIST_PPO T) S
-(@List2LIST T
-   (@ppo_bot T))) as SL.
-assert (HSeq:  SL = single (LIST_bot T) -> 
-   S = single (list_bot T)) by
-(intro ; rewrite <- fmap_single;
-  now subst).
-destruct (is_directed_in_LIST _ SL HdSL) as
-[Heqs | (Hneqs & j & sj & Heqr & Had)]; 
-[left; now apply HSeq|right; clear HSeq].
-assert(HSneq : S <> single (list_bot T)) by
-(intro Heq'; apply Hneqs;rewrite HeqSL;
-now rewrite <- fmap_single in Heq').
-split; auto.
-exists j, (fmap sj (EXP2list j)).
-split.
-{
-  apply set_equal; intro l ; split; intro Hml.
-  -
-   destruct Hml as (Hml & Hneql).
-   destruct l ; [clear Hneql| exfalso; now apply Hneql].
-   exists l; split; auto.
-   assert (HSL :
-     member (remove SL (LIST_bot T)) 
-      (List2LIST ppo_bot (list_inj _ l))).
-     {
-      split.
-      - 
-      rewrite HeqSL; now exists (list_inj _ l).
-      -
-       cbn; intro; discriminate.
-     }
-   assert (Hmsj : member 
-   (fmap sj
-         (sum_inj
-            (fun n : nat => EXP (BELOW n) T)
-            j))
-    (List2LIST ppo_bot (list_inj T l))) by
-    now rewrite <- Heqr.
-   destruct Hmsj as (e & Hmb & Heqbig).
-   exists e; split; auto.
-   assert (HeqLL :
-    LIST2List (List2LIST ppo_bot (list_inj T l))
-   =
-   LIST2List (sum_inj
-     (fun n : nat => EXP (BELOW n) T)
-     j e)) by now apply f_equal.
-    rewrite  List2LIST2List in HeqLL.
-    cbn in HeqLL.
-    now injection HeqLL.
-  -  
-   destruct Hml as (l' & (Hml' & Heq')); subst.
-   eexists; [| intro Habs; discriminate].
-   cbn in Hml'.
-   assert (HMRS : member 
-   (fmap sj
-   (sum_inj
-      (fun n : nat =>
-       EXP (BELOW n) T) j))  (List2LIST ppo_bot (list_inj _ l'))).
-   {
-    cbn in Heqr.
-    cbn.
-    destruct Hml' as (x & Hsjx & Heq); subst.
-    exists x; split; auto.
-    rewrite length_EXP2list.
-    now rewrite EXP2list2EXP.
-   }
-   cbn in Heqr, HMRS.
-   rewrite <- Heqr in HMRS.
-   destruct HMRS as (HMRS & _).
-   destruct HMRS as (z & Hmz & Heqz); subst.
-   cbn in Heqz.
-   assert (Heqz' : 
-   LIST2List (sum_inj
-         (fun n : nat => EXP (BELOW n) T)
-         (length l')
-         (list2EXP ppo_bot (length l') l')) =
-       LIST2List (List2LIST ppo_bot z)
-   ) by now f_equal.
-   cbn in Heqz'.
-   rewrite List2LIST2List in Heqz'.
-   rewrite list2EXP2list in Heqz'; auto.
-   now rewrite Heqz'.  
-}
-split.
-{
-intros l Hml.
-assert (Hml' : 
-member 
-(remove SL (LIST_bot T))
-(List2LIST ppo_bot (list_inj _ l))).
-{
-  cbn in Heqr.
-  cbn.
-  unfold LIST in Heqr.
-  rewrite Heqr.
-  destruct Hml as (x & (Hsjx & Heq)); subst.
-  rewrite length_EXP2list.
-  rewrite EXP2list2EXP.
-  now exists x.
-}
-destruct Hml' as (Hml' & _).
-rewrite HeqSL in Hml'.
-destruct Hml' as (z & Hmz & Heqz); subst.
-apply List2LIST_injective in Heqz.
-destruct Hml as (x & (Hsjx & Heq)); subst.
-now rewrite length_EXP2list.
-}
-intros i Hlt.
-specialize (Had {|nval := i; is_below := Hlt|}).
-destruct Had as (Hne & Had).
-split.
--
- rewrite not_empty_member in *.
- destruct Hne as (x & Hmx).
- exists x.
- destruct Hmx as (y & Hmy & Heq); subst.
- exists (EXP2list _ y).
- split; [now exists y |].
- now rewrite nth_EXP2LIST with (Hi := Hlt).
--
- intros x y Hmx Hmy.
- specialize (Had x y).
- assert (Hh1 : member
- (proj sj
-    {| nval := i; is_below := Hlt |}) x).
- {
-   destruct Hmx as (z & Hmz & Heqy); subst.
-   destruct Hmz as (u & Hmu & Hequ); subst.
-   rewrite nth_EXP2LIST with (Hi := Hlt).
-   now exists u.
- }   
- assert (Hh2 : member
- (proj sj
-    {| nval := i; is_below := Hlt |}) y).
- {
-   destruct Hmy as (z & Hmz & Heqy); subst.
-   destruct Hmz as (u & Hmu & Hequ); subst.
-   rewrite nth_EXP2LIST with (Hi := Hlt).
-   now exists u.
- }
- specialize (Had Hh1 Hh2).
- destruct Had as (z & Hmz & Hle1 & Hle2).
- exists z; split; auto.
- destruct Hmz as (u & Hmu & Hequ); subst.
- exists (EXP2list j u); split; 
- [now exists u |].
- now rewrite nth_EXP2LIST with (Hi := Hlt).
- Qed.
-
-
 Lemma mapb_monotonic_in_func{P1 P2: CPO} : forall (f g:P1->P2),
 (forall x, f x <= g x) ->
 forall l, 
@@ -1003,52 +732,33 @@ constructor.
 Qed.
 
 
-
-
-Definition list_le{P:PPO}(l1 l2 : list P) :=
-  length l1 = length l2 /\
-  forall i, i < length l1 ->
-  nth i l1 ppo_bot <= nth i l2 ppo_bot.
-
+Definition list_le{P:PPO}(l1 l2 : list P) := List_le (list_inj _ l1) (list_inj _ l2).
 
 Lemma list_le_refl{P:PPO}: forall (l: list P),
 list_le l l.
 Proof.
 intro l.
-split; auto.
-intros i Hlt.
-apply poset_refl.
+apply List_le_refl.
 Qed.
 
 
 Lemma list_le_trans{P:PPO}: forall (l1 l2 l3: list P),
 list_le l1 l2 -> list_le l2 l3 -> list_le l1 l3.
 Proof.
-intros l1 l2 l3 (Heql1 & Heqll1)  (Heql2 & Heqll2) .
-split; [congruence|].
-intros i Hlt.
-eapply poset_trans; eauto.
-apply Heqll2.
-now rewrite Heql1 in Hlt.
+intros l1 l2 l3 Hle1 Hle2.
+eapply List_le_trans ; eauto.
 Qed.
 
 
 Lemma list_le_antisym{P:PPO}: forall (l1 l2: list P),
 list_le l1 l2 -> list_le l2 l1 -> l1 = l2.
 Proof.
-intros l1 l2 (Heql1 & Heqll1)  (Heql2 & Heqll2) .
-apply nth_ext with (d := ppo_bot)(d' := ppo_bot); 
-[now rewrite Heql1 |].
-intros n Hlt.
-apply poset_antisym.
--
-  now apply Heqll1.
--
-  apply Heqll2.
-  now rewrite Heql1 in Hlt.
-Qed.  
+intros l1 l2 Hle1 Hle2.
+apply List_le_antisym in Hle1; auto.
+injection Hle1; intros; now subst.
+Qed.
 
-
+ 
 Definition list_Poset(P:PPO) : Poset :=
 {|
   poset_carrier := list P;
@@ -1066,147 +776,167 @@ match L with
  | list_inj _ l => l
 end.
 
-
-Lemma map_cont_aux{P1 P2 : CPO}:
-forall (l: list P1) (S: Setof (EXP_CPO P1 P2))(T : Setof (List P2)),
-is_directed S -> 
- T = fmap S
-         (fun g : EXP_CPO P1 P2 =>
-          list_inj P2 (map g l)) ->
-forall 
-(S': Setof (list P2)),
-is_directed (P := list_Poset P2) S' -> 
-remove T (list_bot P2) = fmap S' (list_inj P2) ->
-forall (j : nat),    
- length l = j ->
- forall (f: EXP P1 P2),  S f -> 
-is_lub (P := list_Poset P2)  S' (map (fun d : P1 => cpo_lub (proj S d)) l).
+Lemma get_list_mono{P:PPO} :
+forall (l1 l2 : list P), 
+list_le  l1 l2 -> 
+list_le (P := P)
+(get_list ((list_inj _) l1) )
+(get_list ((list_inj _) l2)).
 Proof.
-intros l S T HdS HeqT S' HdS' HeqS' j  Hlj f  Hmf.
-assert (HeqS'' : S' = fmap T get_list).
+now intros l1 l2 Hle.
+Qed.
+
+Lemma list_inj_get_list{P:Type}:
+forall (L : List P),
+L <> list_bot P ->
+L = (list_inj P) (get_list L).
+Proof.
+intros [l |] Hne; auto.
+contradiction.
+Qed.
+
+Definition dcpo_lub{P:CPO} (S: Setof (list P)) :=
+  get_list (cpo_lub (c := List_CPO P) (fmap S (list_inj P))).
+
+
+Lemma list_inj_mono{P:PPO}: 
+is_monotonic (P1 := list_Poset P)(P2 := List_Poset P)
+(list_inj P).
+Proof.
+now intros x y Hle.
+Qed.
+
+
+Lemma list_inj_rev_mono{P:PPO}: 
+is_rev_monotonic (P1 := list_Poset P)(P2 := List_Poset P)
+(list_inj P).
+Proof.
+now intros x y Hle.
+Qed.
+
+
+Lemma list_inj_injective{P:Type}  : is_injective (list_inj P).
+Proof.
+intros x y Heq.
+now inversion Heq.
+Qed.
+
+Lemma directed_cpo_fmap_ne{P:CPO}:
+forall (S : Setof (list P)),
+is_directed (P := list_Poset P) S -> 
+cpo_lub (c:= List_CPO P) (fmap S (list_inj P)) <> list_bot P.
+Proof.
+intros S Hd Habs.
+assert (HdT : is_directed (P := List_Poset P) (fmap S
+           (list_inj P))).
 {
-  apply set_equal; intro x; split; intro Hmx.
-  -
-   subst.
-   assert (Hm3 :member (remove
-   (fmap S
-      (fun g : EXP_CPO P1 P2 =>
-       list_inj P2 (map g l)))
-   (list_bot P2)) (list_inj P2 x))
-   by (rewrite HeqS';
-     now exists x).
-   destruct Hm3 as ((g & Hmg & Heq ) & _); 
-    subst.
-   injection Heq; clear Heq ; intro Heq;
-   rewrite Heq; clear Heq.
-   exists (list_inj _ (map g l)); split; auto.
-   now exists g.
-  -
-   destruct Hmx as (u & Hmu & Heq); subst.
-   destruct Hmu as (g & Hmg & Heq); subst.
-   cbn in *.
-   assert (Hm4: member (remove
-   (fmap S
-      (fun g : EXP P1 P2 =>
-       list_inj P2 (map g l)))
-   (list_bot P2)) (list_inj _ (map g l))).
-   {
-    split; [| intro; discriminate].
-    now exists g.
-   }
-   rewrite HeqS' in Hm4.
-   destruct Hm4 as (w & Hmw & Heq); subst.
-   injection Heq; clear Heq ; intro Heq;
-   now rewrite Heq.
+  apply (monotonic_directed (P1 := list_Poset P) (P2 := List_Poset P));
+   auto.
+  apply list_inj_mono. 
 }
-assert (Hg:  S' = fmap S (fun g => (map g l))).
-{
- rewrite HeqS''.
- apply set_equal; intro x; split; intro Hmx.
- -
-  destruct Hmx as (L & Hmu & Heq); subst.
-  destruct Hmu as (g & Hmg & Heq); subst.
-  cbn.
-  now exists g.
--
-  destruct Hmx as (u & Hmu & Heq); subst.
-  exists (list_inj _ (map u l)); split; auto.
-  now exists u.
+specialize (cpo_lub_prop (c := List_CPO P)_ HdT) as Hcp.
+destruct Hcp as (Hu' & _).
+rewrite Habs in Hu'.
+destruct HdT as (Hne & _).
+rewrite not_empty_member in Hne.
+destruct Hne as (y & Hy).
+specialize (Hu' _ Hy).
+apply (le_bot_eq (P := List_PPO P) y) in Hu'.
+subst.
+destruct Hy as (w & Hmw & Heqw).
+discriminate.
+Qed. 
+
+
+Lemma dcpo_lub_is_lub{P:CPO} : forall  (S: Setof (list P)),
+is_directed (P := list_Poset P) S ->
+is_lub (P := list_Poset P) S (dcpo_lub S).
+Proof.
+intros S Hd.
+remember (fmap S (list_inj P)) as T.
+assert (HdT : is_directed (P := List_Poset P) T).
+{ 
+  subst.
+  apply (monotonic_directed (P1 := list_Poset P) (P2 := List_Poset P));
+   auto.
+  apply list_inj_mono. 
 }
-rewrite Hg.
-clear HeqS''.  
+specialize (cpo_lub_prop (c := List_CPO P)_ HdT) as Hcp.
+specialize Hcp as Hcp'.
+destruct Hcp' as (Hu & Hm).
+specialize (directed_cpo_fmap_ne _ Hd) as HnT.
 split.
 -
  intros x Hmx.
- destruct Hmx as (u & Hmu & Heq); subst.
- split; [now do 2 rewrite map_length |rewrite map_length].
- intros i Hlt.
- rewrite nth_indep with (d' := u ppo_bot); 
-  [|now rewrite map_length].
- rewrite map_nth.
- remember  (u (nth i l ppo_bot)) as v.
- remember (fun d : P1 => cpo_lub (proj S d)) as g. 
- rewrite nth_indep with (d' := g ppo_bot); 
-  [|now rewrite map_length].
-rewrite map_nth.
-subst.
-specialize (directed_proj S (nth i l ppo_bot) HdS) as Hdp.
-specialize (cpo_lub_prop _ Hdp) as Hil.
-destruct Hil as (Hu & Hm).
-apply Hu.
-now exists u.
+ apply list_inj_rev_mono.
+ assert (Hmx': member T (list_inj _ x)) by 
+  (subst; now exists x).
+ eapply poset_trans ; eauto.
+ unfold dcpo_lub.
+ rewrite <- list_inj_get_list; 
+ [subst ; apply poset_refl |].
+ apply HnT.
 -
- intros y Hu.
- assert (Hmmm : member
- (fmap S
-    (fun g : EXP_CPO P1 P2 => map g l))
- (map f l)) by now exists f.
- specialize Hu as Hu'.
- specialize (Hu' (map f l) Hmmm).
- destruct Hu' as (Hlu & Hllu).
- rewrite map_length in Hlu.
- split; [now rewrite map_length|rewrite map_length].
- intros i Hlt.
- remember (fun d : P1 => cpo_lub (proj S d)) as h.
- rewrite nth_indep with (d' := h ppo_bot); 
- [| now rewrite map_length].
- rewrite map_nth.
- rewrite Heqh; clear Heqh h.
- assert (Hllu' :  forall i : nat,
-   i < length l ->
-   f (nth i l (@ppo_bot P1)) <=
-   nth i y (@ppo_bot P2)).
+  intros y Huy.
+  cbn in y. 
+  assert (Hle' : cpo_lub (c:= List_CPO P) T <= list_inj _ y).
   {
-    intros k Hlk.
-    rewrite map_length in Hllu.
-    specialize (Hllu _ Hlk).
-    rewrite nth_indep 
-     with (d' := f ppo_bot) in Hllu ; 
-      [| now rewrite map_length].
-    now rewrite map_nth in Hllu.   
+    apply Hm.
+    subst.
+    intros x Hmx.
+    destruct Hmx as (w & Hmw & Heq); subst.
+    specialize (Huy _ Hmw).
+    now apply list_inj_mono.
   }
- clear Hllu.
- specialize (directed_proj S (nth i l ppo_bot) HdS) as Hdp. 
- specialize (cpo_lub_prop _ Hdp) as Hil.
- destruct Hil as (Hv & Hm).
- apply Hm.
- intros x (u & Hmu & Heq); subst.
- cbn in *.
- unfold is_upper in Hu.
- specialize (Hu (map u l)).
- assert (Hmuu : member
- (fmap S
-    (fun g : EXP P1 P2 => map g l))
- (map u l)) by now exists u.
- specialize (Hu Hmuu).
- destruct Hu  as (Hul & Hull).
- rewrite map_length in *.
- specialize (Hull _ Hlt).
- rewrite nth_indep with (d' := u ppo_bot) in Hull;
-  [| now rewrite map_length].
- now rewrite map_nth in Hull.
+  remember (cpo_lub (c:= List_CPO P) T) as C.
+  destruct C.
+  + 
+   unfold dcpo_lub.
+   subst.
+   now rewrite <- HeqC.
+  +
+   exfalso.
+   subst.
+   now apply HnT.
+Qed.   
+    
+
+Lemma map_mono_in_func{P1 P2:PPO} : 
+forall (l : list P1),
+is_monotonic (P1 := EXP_Poset P1 P2) (P2 := list_Poset P2)
+  (fun g : EXP_Poset P1 P2 => map g l).
+Proof.
+intros l f g Hle. 
+cbn in Hle.
+cbn.
+constructor.
+-
+  now do 2 rewrite map_length.
+-
+  rewrite map_length.
+  intros i Hlt.   
+  rewrite nth_indep with (d' := f ppo_bot); [|now rewrite map_length].
+  rewrite map_nth.
+  remember (f (nth i l ppo_bot)) as u.
+  rewrite nth_indep with (d' := g ppo_bot); [|now rewrite map_length].
+  rewrite map_nth.
+  subst.
+  apply Hle.
+Qed.  
+
+Lemma fmap_preserves_dir{P1 P2: PPO}:
+forall (l: list P1)(S : Setof (EXP P1 P2)),
+is_directed (P := EXP_Poset P1 P2) S -> 
+is_directed  (P := list_Poset P2) 
+  (fmap S (fun g  => map g l)).
+Proof.
+intros l S Hd.
+apply (@monotonic_directed (EXP_Poset P1 P2) 
+ (list_Poset P2));  auto.
+apply map_mono_in_func. 
 Qed.
- 
+
+
 
 Lemma mapb_continuous_in_func{P1 P2: CPO} : 
 forall (l : List P1),
@@ -1222,164 +952,95 @@ intros S Hd; split.
  intros x y Hle.
  now apply mapb_monotonic_in_func.
 }
-cbn [mapb]. 
-specialize (lub_proj _ Hd) as Hlp.
-specialize (cpo_lub_prop _ Hd) as Hlc.
-apply is_lub_unique with (x := cpo_lub S) in Hlp; auto.
-rewrite Hlp.
-clear Hlp.
-remember (fmap S (fun g => mapb g (list_inj P1 l)))
- as T.
-assert (HdT : is_directed (P := List_PPO P2) T).
-{
- subst.
- apply @monotonic_directed; auto.
- intros x y Hle.
- now apply mapb_monotonic_in_func.
-}
-destruct (is_directed_in_List _ HdT) as
-[HeqS | (HneqS & Hex)].
-{
- subst.
- cbn in HeqS.
- rewrite set_equal in HeqS.
- specialize (HeqS (list_bot _)).
- rewrite member_single_iff in HeqS.
- assert (HmS : member
- (fmap S
-    (fun g : EXP P1 P2 =>
-     list_inj P2 (map g l)))
- (list_bot P2)) by intuition; clear HeqS.
- destruct HmS as (u & Hmu & Heq); subst.
- discriminate.
-}
-destruct Hex as (j & S' & Hr & Ha1 & Ha2).
-specialize HdT as Haux.
-specialize Haux as (Hne & _).
-specialize (@cpo_lub_prop (List_CPO P2) _ HdT) as Hclp.
-
-cbn [mapb] in HeqT.
-specialize (@is_lub_remove_bot 
- (List_PPO P2) T (@cpo_lub (List_CPO P2) T) Hne HneqS) as Hrb.
-assert (Hlr: @is_lub (List_PPO P2)
-(@remove
-   (List_PPO P2) T
-   (@ppo_bot
-      (List_PPO P2)))
-(@cpo_lub
-   (List_CPO P2) T)) by intuition.
-clear Hrb.   
-replace (@ppo_bot
-              (List_PPO P2)) with (list_bot P2) in Hlr; auto.
-cbn [List_PPO] in Hlr.   
-replace (@remove (List_PPO P2) T (list_bot P2))
- with ( @remove (List P2) T (list_bot P2)) in Hlr; auto.
-rewrite Hr in Hlr.
-specialize (not_empty_not_single_2dif T _ Hne HneqS) 
- as H2d.
-destruct H2d as (y & Hmy & Hney). 
-specialize 
- (@remove_bot_directed 
- (List_PPO P2) T y HdT Hmy Hney) as Hrb.
- replace (@ppo_bot
- (List_PPO P2)) with (list_bot P2) in Hrb; auto. 
- replace (@remove (List_PPO P2) T (list_bot P2))
- with ( @remove (List P2) T (list_bot P2)) in Hrb; auto. 
- rewrite Hr in Hrb.
-specialize (@cpo_lub_prop (List_CPO P2) _ Hrb) as Hlp.
-specialize Hlp as Hlp'.
-apply is_lub_unique with (x := cpo_lub (c:= List_CPO P2)T) in Hlp; auto.
-rewrite HeqT in Hlp.
-cbn [mapb] in Hlp.
-replace (@fmap (EXP_CPO P1 P2)
-(List_CPO P2) S
-(fun g : EXP_CPO P1 P2 =>
- list_inj P2
-   (@map P1 P2 g l))) with 
-(@fmap (EXP_CPO P1 P2)
-           (List P2) S
-           (fun g : EXP_CPO P1 P2 =>
-            list_inj P2
-              (@map P1 P2 g l))) ; auto.
-rewrite Hlp.
-clear Hlp.
-
-assert (HdS' : is_directed (P := list_Poset P2) S').
-{
- apply (@rev_monotonic_directed (list_Poset P2) (List_Poset P2) S')
- with (f := list_inj P2); auto.
- intros u v Hle.
- now inversion Hle.
-}
-assert (Hlub' : forall l',
-  is_lub (P := list_Poset P2) S' l' ->
-   cpo_lub (c:= List_CPO P2) (fmap S' (list_inj P2)) = list_inj P2 l').
-{
- intros l' Hlub'.
- assert (Hlub'' : 
- is_lub (P := List_Poset P2) (fmap S' (list_inj P2)) (list_inj P2 l')).
+cbn [mapb].
+replace (fun g:(EXP_CPO P1 P2) => list_inj P2 (map g l)) 
+ with ((list_inj P2) ° (fun g  => (map g l))); auto.
+rewrite fmap_comp. 
+specialize Hd as Hd'.
+apply fmap_preserves_dir with (l := l) in Hd'.
+unfold EXP in Hd'.
+specialize Hd' as Hd''.
+apply directed_cpo_fmap_ne in Hd''.
+Opaque cpo_lub.
+cbn in *.
+remember (fmap S (fun g : P1 -> P2 => map g l)) as S2.
+cbn in *.
+unfold EXP in HeqS2.
+specialize Hd' as Hd3.
+rewrite <- HeqS2 in Hd''.
+remember 
+(cpo_lub (c:= List_CPO P2) (fmap S2 (list_inj P2))) as ll.
+destruct ll; [|contradiction].
+rewrite Heqll in Hd''.
+rewrite list_inj_get_list in Heqll; auto.
+f_equal.
+injection Heqll ; clear Heqll ; intro Heqll.
+rewrite Heqll; clear Heqll.
+change (get_list
+(cpo_lub (c := List_CPO P2)(fmap S2 (list_inj P2)))) 
+with
+(dcpo_lub (P := P2) S2).
+symmetry.
+apply dcpo_lub_is_lub in Hd'.
+rewrite <- HeqS2 in Hd'.
+specialize (@lub_proj _ _ S Hd) as Hlp.
+specialize (cpo_lub_prop (c:= EXP_CPO P1 P2) _ Hd) as Hcp.
+apply is_lub_unique with (x := cpo_lub (c:= EXP_CPO P1 P2) S) in Hlp; auto.
+rewrite Hlp; clear Hlp.
+assert (Hlub' : is_lub (P := list_Poset P2)S2
+  (map (fun d : P1 =>
+  cpo_lub (proj S d)) l));
+   [ | apply is_lub_unique 
+      with (x := dcpo_lub S2) in Hlub'; auto ].
+subst.      
+split.
+-
+ intros x Hmx.
+ destruct Hmx as (u & Hmu & Heq); subst.
+ apply map_mono_in_func.
+ intro x.
+subst.
+specialize (directed_proj S x Hd) as Hdp.
+specialize (cpo_lub_prop _ Hdp) as Hil.
+destruct Hil as (Hu & Hm).
+apply Hu.
+now exists u.
+-
+ intros y Hu.
+ assert (Hly : length l = length y).
  {
-   split.
-   -
-   intros x (ll & Hmll' & Heq); subst.
-   destruct Hlub' as (Hu & Hm).
-   specialize (Hu _ Hmll').
-   destruct Hu as (Heql & Heqll).
-   constructor; auto.  
-   -
-    cbn.
-    intros z Hu.
-    destruct Hlub' as (Hv & Hm).
-    destruct z.
-    {
-    assert (Hu' : is_upper (P := list_Poset P2) S' l0).
-    {
-      intros x Hmx.
-      assert (Hmm : member (fmap S' (list_inj P2))
-      (list_inj P2 x)) by now exists x.
-      specialize (Hu (list_inj _ x) Hmm).
-      inversion Hu; subst; split; auto.
-    }
-    specialize (Hm _ Hu').
-    destruct Hm as (Hl & Hll).    
-    constructor; auto.
-  }
-   destruct HdS' as (Hne' & _).
-   rewrite not_empty_member in Hne'.
-   destruct Hne' as (w & Hmw).
-   assert (Hmm : member (fmap S' (list_inj P2))
-      (list_inj P2 w)) by now exists w.
-   specialize (Hu _ Hmm).
-   inversion Hu.  
+   destruct Hd3 as (Hne &  _).
+   rewrite not_empty_member in Hne.
+   destruct Hne as (w &  Hmw) ; subst.
+   specialize (Hu _ Hmw).
+   destruct Hmw as (f & Hmf & Heq); subst.
+   inversion Hu ; subst.
+   now rewrite map_length in H1.
  }
-  eapply is_lub_unique; eauto.
-}
- specialize (Hlub' (map
- (fun d : P1 => cpo_lub (proj S d))
- l)).
- rewrite Hlub'; auto.
- clear Hlub'.
- rewrite HeqT in Hmy.
- destruct Hmy as (f & HSx & Heq).
- rewrite Heq in * ; clear Heq.
- cbn in f.
- assert (HlT :
-  member (remove T (list_bot P2)) 
-  (list_inj _ (map f l))).
- {
-  split; [| intro ; discriminate].
-  rewrite HeqT.
-  now exists f.
- }
- rewrite Hr in HlT.
- destruct HlT as (l' & Hml' & Heq).
- injection Heq ; clear Heq; intros Heq.
- rewrite <- Heq in *; clear Heq.
- specialize Ha1 as Hlj.
- specialize (Hlj _ Hml').
- rewrite map_length in Hlj.
- rewrite HeqT in Hr.
- subst.
- eapply map_cont_aux ; eauto.
+  constructor ; rewrite map_length; auto.
+  intros u Hlt.
+  remember (fun d : P1 =>
+  cpo_lub (proj S d)) as h.
+  rewrite nth_indep with (d' := h ppo_bot);
+  [rewrite map_nth | now rewrite  map_length].
+  subst.
+  unfold is_upper in Hu.
+  specialize Hd as Httt.
+  eapply directed_proj  with (d := (nth u l ppo_bot)) in Httt.
+  specialize (cpo_lub_prop _ Httt) as Hcplp.
+  destruct Hcplp as (Hup & Hmp).
+  apply Hmp.
+  intros z Hmz.
+  destruct Hmz as (g & Hmg & Heq); subst.
+  specialize (Hu (map g l)).
+  assert (Hm4 : member (fmap S
+     (fun g : P1 -> P2 => map g l))
+      (map g l)) by now exists g.
+  specialize (Hu Hm4).
+  inversion Hu; subst.
+  rewrite map_length in *.
+  specialize (H2 _ Hlt).
+  rewrite nth_indep with (d' := g ppo_bot) in H2;
+  [now rewrite map_nth in H2 | now rewrite  map_length].
 Qed.
 
