@@ -1,6 +1,6 @@
 # Coq Development for JLAMP submission
 
-This is the Coq code associated to our JLAMP submission **Formal Definitions and Proofs for Partial (Co)recursive Functions in Coq**.  The submission is available as a [technical report](https://inria.hal.science/hal-04360660)
+This is the Coq code associated to our JLAMP submission **Formal Definitions and Proofs for Partial (Co)recursive Functions in Coq**.  The submission is available as a [technical report](https://inria.hal.science/hal-04360660).
 
 
 ## Files
@@ -19,23 +19,23 @@ This is the Coq code associated to our JLAMP submission **Formal Definitions and
  
  * *Kleene.v* : Kleene's fixpoint theorem.
  
- * *Ideal.v* : the notion of ideal (directed, downward-closed set) of a PPO, and various properties (e.g., ideals form a CPO whose order is inclusion and whose compacts are the principal ideals.
+ * *Ideal.v* : the notion of ideal (directed, downward-closed set) of a PPO, and various properties (e.g., ideals form a CPO whose order is inclusion and whose compacts are the principal ideals).
  
- * *Algebraic.v* : the notion of algebraic CPO; ideals over a PPO form an algebraic CPO; the notion of $\epsilon\delta$-continuity and its equivalence to continuity for functions between algebraic CP
+ * *Algebraic.v* : the notion of algebraic CPO; ideals over a PPO form an algebraic CPO; the notion of $\epsilon\delta$-continuity and its equivalence to continuity for functions between algebraic CPOs.
  
- * *Completion.v*: the completion of a PPO is an algebraic CPO together with a bimonotonic bijection from the PPO to the compact elements of the algebraic CPO. Two concrete completions are defined: ideal completion and the completion of the compacts of an algerbaic CPO being the CPO itself.
+ * *Completion.v*: the completion of a PPO is an algebraic CPO together with a bimonotonic bijection from the PPO to the compact elements of the algebraic CPO. Two concrete completions are defined: ideal completion, and the completion of the PPO of compacts of an algerbaic CPO being the algebraic CPO itself.
  
  * *Option.v*: the flat order of the option type, up to and including the fact that, as an algebraic CPO, it is a completion of itself seen as a PPO.
 
-* *Exp.v* : the set of functions from a set to an algebraic CPO form an algebraic CPO whose compacts are functions having finite support and compact values.  If the domain is a finite set, the fact that the PPO of functions is completed to an algerbraic CPO whose compacts are exactly the compact-values functions.
+* *Exp.v* : the set of functions from a set to an algebraic CPO form an algebraic CPO whose compacts are functions having finite support and compact values.  If the domain is a finite set, the fact that the PPO of functions is completed to an algerbraic CPO whose compacts are exactly the compact-valued functions.
 
 * *Sum.v*: the separated sum of  PPOs, CPOs, and algebraic CPOs is an order of the same kind as its summands. The sum of the completions of a set of PPOs is the completion of the sum of the PPOs in question.
 
-* *List.v*: lists, first as a sum of exponantials and then as Coq list plus.a bottom element, as PPOs, CPOs, and algebraic CPOs of lists  that are completions of lists of PPOs. Functions on lists (map, rev) and their continuity.
+* *List.v*: lists, first as sum of exponantials and then, isomorphically, as Coq lists plus a bottom element. Their organization as PPOs, CPOs, and algebraic CPOs of lists  that are completions of lists of the PPOs of lists of compact elements. Functions on lists (map, rev) and their continuity.
 
 * *FunComp.v*: continuous functions between algebraic CPOs as unique completions of monotonic functions between the PPOs being the compacts of the algebraic CPOs in question.
 
-* *Stream.vv* : streams as completions of their finite approximations. Their constructors and destructors, the fact the (completed) constructors act as constructors of the completed streams.  Coinductive definitions of totality and bisimulation.
+* *Stream.v* : streams as completions of their finite approximations. Their constructors and destructors, the fact the (completed) constructors act as constructors of the completed streams.  Coinductive definitions of totality and bisimulation.
 
 * *Tree.v* : same as previous item, but for Rose trees.
 
