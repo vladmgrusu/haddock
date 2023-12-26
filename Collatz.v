@@ -47,7 +47,6 @@ split.
     exists (Some n); split; auto.
 Qed.
 
-Unset Printing Implicit.
 
 Definition Collatz (f : option nat -> option nat) (x : option nat): option nat :=
 match x with
@@ -94,7 +93,6 @@ destruct x.
 - 
   destruct (n =? 1) eqn: Heq1.
   +
-   Unset Printing Implicit.
    replace  (@fmap (EXP (option nat) (option_CPO nat))
        (option_CPO nat) S
        (fun _ : EXP (option nat) (option_CPO nat)
@@ -157,8 +155,6 @@ destruct x.
        eexists (f (Some (3*n+1))); split; auto.
        now exists f.     
 -
-  Unset Printing Implicit.
-
   replace
     (@fmap (EXP (option nat) (option_CPO nat))
        (option_CPO nat) S
@@ -177,22 +173,45 @@ destruct x.
    apply member_single.
 Qed.
 
+
+  
 Definition collatz := pointwise_fix (A:=  (option nat))
  (B:=  (option_CPO nat)) Collatz.
 
-Lemma even_not_one :
-forall n,even n = true ->  n =?1 = false.
-Proof.
-intros n Hnt.
-rewrite eqb_neq.
-intro Habs; subst.
-discriminate.
-Qed.   
 
+
+Lemma collatz_app_0_None :
+  forall n,
+    iterate (X:=(EXP_PPO (option nat)  (option_CPO nat))) n Collatz (Some 0) = None.
+Proof.
+induction n ; auto.
+cbn in *.
+now rewrite IHn.
+Qed.
 
 Lemma collatz_zero : collatz (Some 0) = None.
 Proof.
-unfold collatz, pointwise_fix.
-Abort.
+  unfold collatz, pointwise_fix.
+  replace (fun b : option_CPO nat =>
+     exists n : nat,
+       b =
+       @iterate
+         (EXP_PPO (option nat)
+            (option_CPO nat)) n
+         Collatz (@Some nat 0)) with (single (@None nat)).
+  -
+    Opaque cpo_lub.
+    cbn.
+    now rewrite @cpo_lub_single.
+  -
+    apply set_equal; intro x ; split; intro Hmx.
+    +
+      rewrite member_single_iff in Hmx;subst.
+      now exists 0.
+    +              
+      destruct Hmx as (n & Hn);subst.
+      rewrite  collatz_app_0_None.
+      now apply member_single.
+Qed.
    
 
