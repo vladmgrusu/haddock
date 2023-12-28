@@ -45,7 +45,7 @@ This is the Coq code associated to our JLAMP submission **Formal Definitions and
 
 * *Mirror.v*: same as previous item but for *mirror* function on Rose trees.
 
-* *Collatz.v¨*: using Haddock's theorem, defintion of a *collatz* function, and proof of a property stated in the paper.
+* *Collatz.v*: using Haddock's theorem, defintion of a *collatz* function, and proof of a property stated in the paper.
 
 * *While.v*: using Haddoc's theorem, definition of a partial monadic function modeling  imperative *while* loops.
 
