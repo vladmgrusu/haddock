@@ -1,7 +1,7 @@
 From Coq Require Import Compare_dec Lia PeanoNat 
  FunctionalExtensionality PropExtensionality.
 From Corec Require Export Stream Haddock Exp.
-Import Nat Lt Le.
+Import Nat.
 
 
 Module Type Params.

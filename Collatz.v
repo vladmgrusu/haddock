@@ -1,7 +1,7 @@
 From Coq Require Import Compare_dec Lia PeanoNat 
  FunctionalExtensionality PropExtensionality.
 From Corec Require Export  Option Exp Completion Haddock.
-Import Nat Le.
+Import Nat.
 
 Definition Succ(o:option nat) : option nat :=
   match o with

@@ -1,7 +1,7 @@
 From Coq Require Import Compare_dec Lia PeanoNat List
  FunctionalExtensionality PropExtensionality IndefiniteDescription.
 From Corec Require Export Tree Haddock Lists.
-Import Nat Lt Le ListNotations.
+Import Nat ListNotations.
 
 
 

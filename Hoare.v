@@ -100,12 +100,13 @@ eapply bind_rule.
 - exact Hcond.
 Qed.
 
+
 Lemma while_fuel_rule
   (fuel : nat) {S : Type} (cond : program S bool) (body : program S unit)
   (I : bool -> S -> Prop) :
-{{ I true }} cond {{ I }} ->
-{{ I true }} body {{ fun _ s' => I true s' }} ->
-{{ I true }} while_fuel fuel cond body {{ fun _ s' => I false s' }}.
+{{ fun s => exists b, I b s }} cond {{ I }} ->
+{{ I true }} body {{ fun _ s' => exists b, I b s' }} ->
+{{ fun s => exists b, I b s }} while_fuel fuel cond body {{ fun _ s' => I false s' }}.
 Proof.
 intros Hcond Hbody.
 induction fuel as [ | fuel IH]; [intros ? ? ? ? [=] | ].
@@ -120,18 +121,4 @@ eapply if_rule.
   + apply ret_triple.
   + cbn.
     tauto.
-Qed.
-
-Lemma while_rule
-  {S : Type} (cond : program S bool) (body : program S unit)
-  (I : bool -> S -> Prop) :
-{{ I true }} cond {{ I }} ->
-{{ I true }} body {{ fun _ s' => I true s' }} ->
-{{ I true }} While cond {{ body }} {{ fun _ s' => I false s' }}.
-Proof.
-intros Ht1 Ht2 s s' a Ht Ha.
-rewrite while_fuel_while_some in Ha.
-destruct Ha as (fuel & Hfuel).
-apply 
-(while_fuel_rule fuel cond body I Ht1 Ht2 s s' a Ht Hfuel). 
 Qed.

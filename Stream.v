@@ -1,7 +1,7 @@
 From Coq Require Import Compare_dec Lia PeanoNat
  FunctionalExtensionality IndefiniteDescription PropExtensionality.
 From Corec Require Export FunComp Coind Algebraic.
-Import Nat Lt Le.
+Import Nat.
 
 
 Inductive Strm (A:Type) : Type   :=

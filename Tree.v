@@ -1,7 +1,7 @@
 From Coq Require Import Compare_dec Lia PeanoNat List
  FunctionalExtensionality IndefiniteDescription Logic.Eqdep.
 From Corec Require Export FunComp Lists Exp Coind.
-Import Nat Lt Le ListNotations.
+Import Nat ListNotations.
 
 
 Inductive Tree : Type   :=
