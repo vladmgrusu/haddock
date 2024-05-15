@@ -1,6 +1,6 @@
 # Coq Development for JLAMP submission
 
-This is the Coq code associated to our JLAMP submission **Formal Definitions and Proofs for Partial (Co)recursive Functions**.  The submission is available as a [technical report](https://inria.hal.science/hal-04360660v2). "make" to compile. Please use Coq 8.18.0.
+This is the Coq code associated to our JLAMP submission **Formal Definitions and Proofs for Partial (Co)recursive Functions**.  The submission is available as a [technical report](https://inria.hal.science/hal-04360660v). "make" to compile. Please use Coq 8.19.1.
 
 
 ## Files
