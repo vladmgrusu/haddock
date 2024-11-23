@@ -1,4 +1,9 @@
-This is the Coq code associated to the [JLAMP paper](https://inria.hal.science/hal-04360660) **Formal Definitions and Proofs for Partial (Co)recursive Functions**. The Coq version used here is 8.19.1. Type "make" to compile.
+*New ! V2.0 is available at https://github.com/vladmgrusu/haddock/releases/tag/v2.0.* This supersedes and replaces v1.0, described below.
+
+*******************************
+
+
+This is V1.0 of the Coq code associated to the [JLAMP paper](https://inria.hal.science/hal-04360660) **Formal Definitions and Proofs for Partial (Co)recursive Functions**. The Coq version used here is 8.19.1. Type "make" to compile.
 
 
 ## Files
